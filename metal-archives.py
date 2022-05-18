@@ -44,6 +44,7 @@ def get_metal_data(band_name="*",
                    location="*",
                    band_label_name="*",
                    length=200,
+                   batch_download=True,
                    ):
     bands = []
     fetched_count = length
@@ -85,8 +86,9 @@ def get_metal_data(band_name="*",
                 strong.decompose()
                 akronyms_ = soup.text[2:-2].split(', ')
 
+
             # genre
-            genre_ = band[1]
+            genre_ = parse_genre(band[1])
 
             # country
             country_ = band[2]
@@ -121,15 +123,21 @@ def get_metal_data(band_name="*",
                 Band.band_label_name: label_,
             })
         cursor += length
-        print(fetched_count)
+        print(f"{cursor}/{r.json()['iTotalRecords']}")
+        if not batch_download:
+            break
 
     return bands
 
 
+def parse_genre(genre: str):
+    print(genre)
+    return genre
+
 if __name__ == "__main__":
-    data = get_metal_data()
-    for band in data:
-        print("")
-        print(band)
+    data = get_metal_data(batch_download=False)
+    # for band in data:
+    #     print("")
+    #     print(band)
 
     print(len(data))
