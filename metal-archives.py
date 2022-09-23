@@ -1,9 +1,9 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 import enum
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 METAL_API_URL = 'https://www.metal-archives.com//search/ajax-advanced/searching/bands/?' \
                 'bandName={bandName}&' \
                 'genre={genre}&' \
@@ -16,7 +16,6 @@ METAL_API_URL = 'https://www.metal-archives.com//search/ajax-advanced/searching/
                 'location={location}&' \
                 'bandLabelName={bandLabelName}&' \
                 'sEcho=1&iColumns=10&sColumns=0&iDisplayStart={start}&iDisplayLength={length}'
-
 
 class Band(enum.Enum):
     name = 'name'
@@ -130,9 +129,40 @@ def get_metal_data(band_name="*",
     return bands
 
 
-def parse_genre(genre: str):
-    print(genre)
-    return genre
+def parse_distinct_genre(raw_genre: str):
+    """
+    top_level_genres = [
+        "Metal",
+        "Crossover",
+        "Grindcore",
+        "Rock"
+    ]
+    """
+    """
+    "-" ist das gleiche wie " ": Groove/Nu-Metal
+    wenn 2 unterschiedliche top level genres vorkommen, dann wird der erste nach dem gekürzten genre genutzt: Heavy/Stoner Metal/Hard Rock
+    """
+    return raw_genre
+
+
+def parse_genre(raw_genre: str):
+    # parse genre changes over time
+    """
+    first nesting level: a elem for each different genres the band played
+    second nesting level: a elem for each genre the band mixed
+    """
+    genres = [
+
+    ]
+
+    time_periods = raw_genre.split("; ")
+    for time_period in time_periods:
+        time_period = re.sub(r' \(.*?\)', '', time_period)
+        for genre in time_period.split(", "):
+            genres.append(parse_distinct_genre(genre))
+
+    return genres
+
 
 if __name__ == "__main__":
     data = get_metal_data(batch_download=False)
