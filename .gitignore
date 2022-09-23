@@ -128,4 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*db_credentials.json
+./src/db_credentials.json
