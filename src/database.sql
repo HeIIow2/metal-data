@@ -1,8 +1,9 @@
 create table metal.band
 (
-    id INT NOT NULL AUTO_INCREMENT,
+    id BIGINT NOT NULL,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
+    genre TEXT,
     country TEXT,
     year_creation DATE,
     band_notes TEXT,
@@ -10,7 +11,6 @@ create table metal.band
     themes TEXT,
     location TEXT,
     label TEXT,
-    akronyms TEXT,
     notes TEXT,
     PRIMARY KEY (id)
 );
