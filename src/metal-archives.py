@@ -1,5 +1,10 @@
 # sudo systemctl start mariadb.service
 
+"""
+SELECT id, name as label, url, genre, country, location, year_creation, band_notes, label as record_label FROM band
+SELECT band_id_from as source, band_id_to as target, weight FROM band_adjacency
+"""
+
 import json
 import datetime
 import mysql.connector
@@ -7,23 +12,10 @@ import requests
 from bs4 import BeautifulSoup
 import enum
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
-    'Connection': 'keep-alive',
-    'Keep-Alive': 'timeout=5, max=100'
-}
-METAL_API_URL = 'https://www.metal-archives.com//search/ajax-advanced/searching/bands/?' \
-                'bandName={bandName}&' \
-                'genre={genre}&' \
-                'country{country}=&' \
-                'yearCreationFrom={yearCreationFrom}&' \
-                'yearCreationTo={yearCreationTo}&' \
-                'bandNotes={bandNotes}&' \
-                'status={status}&' \
-                'themes={themes}&' \
-                'location={location}&' \
-                'bandLabelName={bandLabelName}&' \
-                'sEcho=1&iColumns=10&sColumns=0&iDisplayStart={start}&iDisplayLength={length}'
+VSCODE = False
+
+
+
 
 class Band(enum.Enum):
     id = 'id'
@@ -55,6 +47,20 @@ def download_band_overview(db,
                            batch_download=True,
                            session=requests.Session()
                            ):
+    
+    metal_api_url = 'https://www.metal-archives.com//search/ajax-advanced/searching/bands/?' \
+                    'bandName={bandName}&' \
+                    'genre={genre}&' \
+                    'country{country}=&' \
+                    'yearCreationFrom={yearCreationFrom}&' \
+                    'yearCreationTo={yearCreationTo}&' \
+                    'bandNotes={bandNotes}&' \
+                    'status={status}&' \
+                    'themes={themes}&' \
+                    'location={location}&' \
+                    'bandLabelName={bandLabelName}&' \
+                    'sEcho=1&iColumns=10&sColumns=0&iDisplayStart={start}&iDisplayLength={length}'
+
     db_cursor = db.cursor()
 
     bands = []
@@ -66,7 +72,7 @@ def download_band_overview(db,
 
     cursor = 0
     while fetched_count == length:
-        url = METAL_API_URL.format(bandName=band_name, genre=genre, country=country,
+        url = metal_api_url.format(bandName=band_name, genre=genre, country=country,
                                    yearCreationFrom=year_creation_from, yearCreationTo=year_creation_to,
                                    bandNotes=band_notes, status=status, themes=themes_string, location=location,
                                    bandLabelName=band_label_name, start=cursor, length=length)
@@ -97,7 +103,6 @@ def download_band_overview(db,
             if strong is not None:
                 strong.decompose()
                 akronyms_ = soup.text[2:-2].split(', ')
-
 
             # genre
             genre_ = parse_genre(band[1])
@@ -195,14 +200,13 @@ def get_adjacency(db, session=requests.Session()):
     endpoint_preset = "https://www.metal-archives.com/band/ajax-recommendations/id/{}/showMoreSimilar/1"
 
     db_cursor = db.cursor()
-    sql = "SELECT * FROM band"
+    sql = "SELECT band.id, band.name FROM band WHERE band.id NOT IN (SELECT band_id_from FROM band_adjacency)"
     db_cursor.execute(sql)
     bands = db_cursor.fetchall()
     unconnected_bands = 0
 
-    db_cursor.execute("SELECT * FROM band_adjacency")
-    print(db_cursor.fetchall())
-
+    # db_cursor.execute("SELECT * FROM band_adjacency")
+    # print(db_cursor.fetchall())
 
     for band in bands:
         id_ = band[0]
@@ -227,7 +231,6 @@ def get_adjacency(db, session=requests.Session()):
             values.append((weight, id_, foreign_id))
         print(id_, name, endpoint, len(values))
 
-        
         sql = f"""
         INSERT INTO band_adjacency 
         (weight, band_id_from, band_id_to) 
@@ -240,12 +243,27 @@ def get_adjacency(db, session=requests.Session()):
             print(e)
 
 
+def fill_database(db: mysql.connector, session=requests.Session()):
+    download_band_overview(db, batch_download=True, session=session)
+    get_adjacency(db, session=session)
+
 
 if __name__ == "__main__":
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/39.0.2171.95 Safari/537.36', 
+        'Connection': 'keep-alive',
+        'Keep-Alive': 'timeout=5, max=100'
+    }
+    
     session = requests.Session()
     session.headers = headers
 
-    with open("src/db_credentials.json", "r", encoding="utf-8") as f:
+    path = "db_credentials.json"
+    if VSCODE:
+        path = "src/db_credentials.json"
+
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
         db_username = data["username"]
         db_password = data["password"]
