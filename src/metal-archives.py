@@ -191,13 +191,50 @@ def parse_genre(raw_genre: str):
     return raw_genre
 
 
-def get_adjacency(db):
+def get_adjacency(db, session=requests.Session()):
+    endpoint_preset = "https://www.metal-archives.com/band/ajax-recommendations/id/{}/showMoreSimilar/1"
+
     db_cursor = db.cursor()
     sql = "SELECT * FROM band"
     db_cursor.execute(sql)
     bands = db_cursor.fetchall()
-    for x in bands:
-        print(x)
+    unconnected_bands = 0
+
+    for band in bands:
+        id_ = band[0]
+        name = band[1]
+        endpoint = endpoint_preset.format(id_)
+        r = session.get(endpoint)
+        if r.status_code != 200:
+            raise Exception(f"{r.status_code}: {r.content}")
+        soup = BeautifulSoup(r.text, 'html.parser')
+        if len(soup.find_all(id='no_artists')) > 0:
+            unconnected_bands += 1
+            print("unconnected")
+            continue
+
+        values = []
+
+        rows = soup.findAll('tr')[1:-1]
+        for row in rows:
+            td = row.findAll('td')
+            foreign_id = int(td[0].find("a").get("href").split("/")[-1])
+            weight = int(td[-1].text)
+            values.append((weight, id_, foreign_id))
+        print(id_, name, endpoint, len(values))
+
+        
+        sql = f"""
+        INSERT INTO band_adjacency 
+        (weight, band_id_from, band_id_to) 
+        VALUES (%s, %s, %s)
+        """
+        try:
+            db_cursor.executemany(sql, values)
+            db.commit()
+        except Exception as e:
+            print(e)
+
 
 
 if __name__ == "__main__":
@@ -217,5 +254,5 @@ if __name__ == "__main__":
         database=db_database
     )
 
-    data = download_band_overview(db, batch_download=True, session=session)
-    get_adjacency(db)
+    # data = download_band_overview(db, batch_download=True, session=session)
+    get_adjacency(db, session=session)
