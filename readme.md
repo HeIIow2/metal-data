@@ -16,3 +16,24 @@ For example X Metal/Y Metal (early); Z Metal (later) means the band played a mix
 For example X Metal, Y Metal indicates the band has played both X Metal and Y Metal throughout their career, no limitation on time.
 
 Consider the difference between a band that has "Power/Thrash Metal" as its genre and another band that has "Power Metal, Thrash Metal" as its genre. In the case of the former, you can assume the band played some mix of power metal and thrash metal. Indeed, that is actually a thing. In the latter case, you can assume the band has albums which are power metal and other albums which are thrash metal, and they may be spread out across the band's discography. The band must be pretty versatile, but at least they keep the styles apart.
+
+# Setup
+
+Zuerst muss die `MariaDB` Datenbanksoftware installiert werden.
+
+---
+
+## Windows
+Unter Windows eignet sich [XAMPP](https://www.apachefriends.org/download.html) gut.
+
+---
+
+## Linux
+Unter linux kann man [dieser Guide](https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-ubuntu-20-04) folgen oder einfach diese Befehle ausführen
+
+```shell
+sudo apt update
+sudo apt install mariadb-server
+sudo systemctl start mariadb.service
+sudo mysql_secure_installation
+```
