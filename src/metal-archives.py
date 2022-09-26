@@ -200,6 +200,10 @@ def get_adjacency(db, session=requests.Session()):
     bands = db_cursor.fetchall()
     unconnected_bands = 0
 
+    db_cursor.execute("SELECT * FROM band_adjacency")
+    print(db_cursor.fetchall())
+
+
     for band in bands:
         id_ = band[0]
         name = band[1]
