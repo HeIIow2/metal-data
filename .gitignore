@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 /src/db_credentials.json
+all_data.sql

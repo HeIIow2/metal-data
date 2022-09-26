@@ -45,9 +45,26 @@ def download_band_overview(db,
                            band_label_name="*",
                            length=200,
                            batch_download=True,
+                           get_all=False,
                            session=requests.Session()
                            ):
-    
+
+    if themes is None:
+        themes = []
+    themes_string = " ".join(themes) if len(themes) > 0 else "*"
+
+    if get_all:
+        band_name=""
+        genre=""
+        country=""
+        year_creation_from=""
+        year_creation_to=""
+        band_notes=""
+        status=""
+        location=""
+        band_label_name=""
+        themes_string=""
+
     metal_api_url = 'https://www.metal-archives.com//search/ajax-advanced/searching/bands/?' \
                     'bandName={bandName}&' \
                     'genre={genre}&' \
@@ -66,9 +83,7 @@ def download_band_overview(db,
     bands = []
     fetched_count = length
 
-    if themes is None:
-        themes = []
-    themes_string = " ".join(themes) if len(themes) > 0 else "*"
+    faulty_ids = []
 
     cursor = 0
     while fetched_count == length:
@@ -107,28 +122,40 @@ def download_band_overview(db,
             # genre
             genre_ = parse_genre(band[1])
 
-            # country
-            country_ = band[2]
-
-            # location
-            location_ = band[3]
-
-            # themes
-            themes_ = band[4]
-
-            # year_creation
+            country_ = None
+            location_ = None
+            themes_ = None
             year_creation_ = None
-            if band[5] != 'N/A':
-                year_creation_ = datetime.date(year=int(band[5]), month=1, day=1)
+            label_ = None
+            notes_ = None
 
-            # label
-            label_ = band[6]
+            if not get_all:
+                # country
+                country_ = band[2]
+                # location
+                location_ = band[3]
+                # themes
+                themes_ = band[4]
+                # year_creation
+                year_creation_ = None
+                if band[5] != 'N/A':
+                    year_creation_ = datetime.date(year=int(band[5]), month=1, day=1)
 
-            # notes
-            notes_ = band[7]
+                # label
+                label_ = band[6]
 
-            db_cursor.execute("DELETE FROM band WHERE id=%s;", (id_,))
-            db.commit()
+                # notes
+                notes_ = band[7]
+
+            else:
+                genre_ = band[1]
+                country_ = band[2]
+
+            db_cursor.execute("SELECT id FROM band WHERE id=%s;", (id_,))
+            if len(db_cursor.fetchall()) > 0:
+                continue
+
+            faulty_ids.append(id_)
 
             sql = f"""
             INSERT INTO band 
@@ -251,7 +278,7 @@ def fill_database(db: mysql.connector, session=requests.Session()):
 if __name__ == "__main__":
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/39.0.2171.95 Safari/537.36', 
+                      'Chrome/39.0.2171.95 Safari/537.36',
         'Connection': 'keep-alive',
         'Keep-Alive': 'timeout=5, max=100'
     }
@@ -276,5 +303,5 @@ if __name__ == "__main__":
         database=db_database
     )
 
-    # data = download_band_overview(db, batch_download=True, session=session)
+    # data = download_band_overview(db, batch_download=True, session=session, get_all=True)
     get_adjacency(db, session=session)

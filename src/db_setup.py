@@ -1,6 +1,8 @@
 import mysql.connector
 import json
 
+# mysqldump -u root -p -A > all_data.sql
+
 VSCODE = False
 
 path = "db_credentials.json"
