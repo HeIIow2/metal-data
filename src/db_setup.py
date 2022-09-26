@@ -2,7 +2,7 @@ import mysql.connector
 import json
 
 
-with open("db_credentials.json", "r") as f:
+with open("src/db_credentials.json", "r") as f:
   data = json.load(f)
   user = data["username"]
   password = data["password"]
@@ -28,7 +28,7 @@ cnx = mysql.connector.connect(
 cursor = cnx.cursor()
 
 # read the table structure and write it to the database
-with open("database.sql", "r", encoding="utf-8") as file:
+with open("src/database.sql", "r", encoding="utf-8") as file:
   sql = file.read().rstrip("\n")
   if sql == "":
     exit()

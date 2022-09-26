@@ -191,11 +191,20 @@ def parse_genre(raw_genre: str):
     return raw_genre
 
 
+def get_adjacency(db):
+    db_cursor = db.cursor()
+    sql = "SELECT * FROM band"
+    db_cursor.execute(sql)
+    bands = db_cursor.fetchall()
+    for x in bands:
+        print(x)
+
+
 if __name__ == "__main__":
     session = requests.Session()
     session.headers = headers
 
-    with open("db_credentials.json", "r", encoding="utf-8") as f:
+    with open("src/db_credentials.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         db_username = data["username"]
         db_password = data["password"]
@@ -208,4 +217,5 @@ if __name__ == "__main__":
         database=db_database
     )
 
-    # data = download_band_overview(db, batch_download=True, session=session)
+    data = download_band_overview(db, batch_download=True, session=session)
+    get_adjacency(db)

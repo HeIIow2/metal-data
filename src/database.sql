@@ -1,4 +1,13 @@
-create table metal.band
+create or replace table metal.band_adjacency
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    weight INT NOT NULL,
+    band_id_from BIGINT NOT NULL,
+    band_id_to BIGINT NOT NULL,
+    PRIMARY KEY (id)
+);
+
+create or replace table metal.band
 (
     id BIGINT NOT NULL,
     name TEXT NOT NULL,
