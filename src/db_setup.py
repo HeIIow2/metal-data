@@ -3,7 +3,7 @@ import json
 
 # mysqldump -u root -p -A > all_data.sql
 
-VSCODE = False
+VSCODE = True
 
 path = "db_credentials.json"
 path2 = "database.sql"

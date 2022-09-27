@@ -14,7 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 import enum
 
-VSCODE = False
+VSCODE = True
 
 
 
@@ -48,7 +48,8 @@ def download_band_overview(db,
                            length=200,
                            batch_download=True,
                            get_all=False,
-                           session=requests.Session()
+                           session=requests.Session(),
+                           skip_present=True
                            ):
 
     if themes is None:
@@ -153,18 +154,20 @@ def download_band_overview(db,
                 genre_ = band[1]
                 country_ = band[2]
 
-            db_cursor.execute("SELECT id FROM band WHERE id=%s;", (id_,))
-            if len(db_cursor.fetchall()) > 0:
-                continue
-
-            faulty_ids.append(id_)
+            if skip_present:
+                db_cursor.execute("SELECT id FROM band WHERE id=%s;", (id_,))
+                if len(db_cursor.fetchall()) > 0:
+                    continue
+            else:
+                db_cursor.execute("DELETE FROM band WHERE id=%s;", (id_,))
+                db.commit()
 
             sql = f"""
             INSERT INTO band 
-            (id, name, url, genre, country, year_creation, band_notes, location, label) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (id, name, url, genre, country, year_creation, band_notes, location, label, themes) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
             """
-            val = (id_, band_name_, ma_url_, genre_, country_, year_creation_, notes_, location_, label_)
+            val = (id_, band_name_, ma_url_, genre_, country_, year_creation_, notes_, location_, label_, themes_)
             db_cursor.execute(sql, val)
             db.commit()
 
@@ -271,10 +274,39 @@ def get_adjacency(db, session=requests.Session()):
         except Exception as e:
             print(e)
 
+def add_theme_to_db(theme: str, cursor):
+    sql = "SELECT id, label FROM theme WHERE label=%s"
+    cursor.execute(sql, (theme,))
+    res = cursor.fetchall()
+    if len(res) > 0:
+        return res[0][0]
+    
+    sql = f"""
+    INSERT INTO theme 
+    (label) 
+    VALUES (%s)
+    """
+    cursor.execute(sql, (theme, ))
+    db.commit()
+    return add_theme_to_db(theme, cursor)
+
+
+
+def fill_themes(db: mysql.connector):
+    db_cursor = db.cursor()
+    sql = "SELECT id, themes, name FROM band WHERE themes IS NOT NULL"
+    db_cursor.execute(sql)
+    bands = db_cursor.fetchall()
+    for id_, raw_themes, name in bands:
+        themes = raw_themes.split(", ")
+        for theme in themes:
+            theme_id = add_theme_to_db(theme, db_cursor)
+            print(id_, theme_id, name, theme)
 
 def fill_database(db: mysql.connector, session=requests.Session()):
-    download_band_overview(db, batch_download=True, session=session)
-    get_adjacency(db, session=session)
+    # download_band_overview(db, batch_download=True, session=session, skip_present=False)
+    # get_adjacency(db, session=session)
+    fill_themes(db=db)
 
 
 if __name__ == "__main__":
@@ -306,4 +338,5 @@ if __name__ == "__main__":
     )
 
     # data = download_band_overview(db, batch_download=True, session=session, get_all=True)
-    get_adjacency(db, session=session)
+    # get_adjacency(db, session=session)
+    fill_database(db=db, session=session)
