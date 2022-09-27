@@ -14,6 +14,14 @@ create or replace table metal.theme
     PRIMARY KEY (id)
 );
 
+create or replace table metal.band_theme
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    band_id BIGINT NOT NULL,
+    theme_id BIGINT NOT NULL,
+    PRIMARY KEY (id)
+);
+
 create or replace table metal.band
 (
     id BIGINT NOT NULL,

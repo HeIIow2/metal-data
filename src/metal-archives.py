@@ -299,9 +299,18 @@ def fill_themes(db: mysql.connector):
     bands = db_cursor.fetchall()
     for id_, raw_themes, name in bands:
         themes = raw_themes.split(", ")
+        values = []
         for theme in themes:
             theme_id = add_theme_to_db(theme, db_cursor)
-            print(id_, theme_id, name, theme)
+            values.append((id_, theme_id))
+        sql = f"""
+        INSERT INTO band_theme
+        (band_id, theme_id) 
+        VALUES (%s, %s)
+        """
+        db_cursor.executemany(sql, values)
+        db.commit()
+
 
 def fill_database(db: mysql.connector, session=requests.Session()):
     # download_band_overview(db, batch_download=True, session=session, skip_present=False)
