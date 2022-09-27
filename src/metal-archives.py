@@ -4,6 +4,9 @@
 SELECT id, name as label, url, genre, country, location, year_creation, band_notes, label as record_label FROM band
 SELECT band_id_from as source, band_id_to as target, weight FROM band_adjacency
 
+get all Metal Themes ordered by popularity
+SELECT theme.label, COUNT(band_theme.id) FROM metal.theme, metal.band_theme WHERE band_theme.theme_id=theme.id GROUP BY band_theme.theme_id ORDER BY COUNT(band_theme.id);
+
 3540373143
 """
 
