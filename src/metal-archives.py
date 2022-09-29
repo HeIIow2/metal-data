@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 import enum
 
-VSCODE = True
+VSCODE = False
 
 
 
@@ -314,11 +314,15 @@ def fill_themes(db: mysql.connector):
         db_cursor.executemany(sql, values)
         db.commit()
 
+def fill_label(db: mysql.connector):
+    db_cursor = db.cursor()
+
 
 def fill_database(db: mysql.connector, session=requests.Session()):
     # download_band_overview(db, batch_download=True, session=session, skip_present=False)
     # get_adjacency(db, session=session)
-    fill_themes(db=db)
+    # fill_themes(db=db)
+    fill_label(db)
 
 
 if __name__ == "__main__":

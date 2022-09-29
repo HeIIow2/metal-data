@@ -7,6 +7,21 @@ create or replace table metal.band_adjacency
     PRIMARY KEY (id)
 );
 
+create or replace table metal.label
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    name TEXT NOT NULL,
+    PRIMARY KEY (id)
+);
+
+create or replace table metal.band_label
+(
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    band_id BIGINT NOT NULL,
+    label_id BIGINT NOT NULL,
+    PRIMARY KEY (id)
+);
+
 create or replace table metal.theme
 (
     id BIGINT NOT NULL AUTO_INCREMENT,
